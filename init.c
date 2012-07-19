@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <sndfile.h>
-#include <lua.h>
-#include <lauxlib.h>
+#include <luaT.h>
 #include <string.h>
+
+const void* sndfile_id;
 
 typedef struct SndFile__
 {
@@ -10,7 +11,7 @@ typedef struct SndFile__
     SF_INFO info;
 } SndFile;
 
-static int sndfile_open(lua_State *L)
+static int sndfile_new(lua_State *L)
 {
   int narg = lua_gettop(L);
   const char *path, *strmode;
@@ -55,7 +56,7 @@ static int sndfile_open(lua_State *L)
     luaL_error(L, "invalid mode (must be 'r', 'w', or 'rw')");
 
 
-  snd = lua_newuserdata(L, sizeof(SndFile));
+  snd = luaT_alloc(L, sizeof(SndFile));
   snd->file = NULL;
   snd->info.frames = 0;
   snd->info.samplerate = 0;
@@ -63,8 +64,8 @@ static int sndfile_open(lua_State *L)
   snd->info.format = 0;
   snd->info.sections = 0;
   snd->info.seekable = 0;
-  luaL_getmetatable(L, "sndfile");
-  lua_setmetatable(L, -2);
+
+  luaT_pushudata(L, snd, sndfile_id);
 
   if(hasinfo)
   {
@@ -98,5 +99,54 @@ static int sndfile_open(lua_State *L)
   if(!(snd->file = sf_open(path, mode, &snd->info)))
     luaL_error(L, "could not open file <%s>", path);
   
+  return 1;
+}
+
+static int sndfile_info(lua_State *L)
+{  
+  SndFile *snd = luaT_checkudata(L, 1, sndfile_id);
+  lua_newtable(L);
+  lua_pushnumber(L, snd->info.frames);
+  lua_setfield(L, -2, "frames");
+  lua_pushnumber(L, snd->info.samplerate);
+  lua_setfield(L, -2, "samplerate");
+  lua_pushnumber(L, snd->info.channels);
+  lua_setfield(L, -2, "channels");
+  lua_pushnumber(L, snd->info.format);
+  lua_setfield(L, -2, "format");
+  lua_pushnumber(L, snd->info.sections);
+  lua_setfield(L, -2, "sections");
+  lua_pushboolean(L, snd->info.seekable);
+  lua_setfield(L, -2, "seekable");
+  return 1;
+}
+
+static int sndfile_free(lua_State *L)
+{
+  SndFile *snd = luaT_checkudata(L, 1, sndfile_id);
+
+  if(snd->file)
+    sf_close(snd->file);
+
+  luaT_free(L, snd);
+
+  return 0;
+}
+
+static const struct luaL_Reg sndfile_SndFile__ [] = {
+  {"info", sndfile_info},
+  {NULL, NULL}
+};
+
+DLL_EXPORT int luaopen_libsndfile(lua_State *L)
+{
+  lua_newtable(L);
+  lua_pushvalue(L, -1);
+  lua_setfield(L, LUA_GLOBALSINDEX, "sndfile");
+
+  sndfile_id = luaT_newmetatable(L, "sndfile.SndFile", NULL, sndfile_new, sndfile_free, NULL);
+  luaL_register(L, NULL, sndfile_SndFile__);
+  lua_pop(L, 1);
+
   return 1;
 }

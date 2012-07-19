@@ -8,11 +8,9 @@ FIND_PACKAGE(SndFile REQUIRED)
 INCLUDE_DIRECTORIES(${SNDFILE_INCLUDE_DIR})
 
 SET(src init.c)
-
-#FILE(GLOB luasrc *.lua)
-#SET(luasrc ${luasrc} test/test.lua)
+SET(luasrc init.lua)
 
 ADD_TORCH_PACKAGE(sndfile "${src}" "${luasrc}")
 #ADD_TORCH_DOK(dok nn "Machine Learning" "Neural Networks" 3.1)
 
-#TARGET_LINK_LIBRARIES(nn luaT TH)
+TARGET_LINK_LIBRARIES(sndfile luaT TH ${SNDFILE_LIBRARY})
