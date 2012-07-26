@@ -2,7 +2,13 @@
 
 The package provide a interface to the [libsndfile](http://www.mega-nerd.com/libsndfile/) library.
 
-Example:
+## Installation
+
+``` lua
+torch-pkg install sndfile
+```
+
+## Example
 ``` lua
 > require 'libsndfile'
 > f = sndfile.SndFile('blah.htk') -- open HTK file
