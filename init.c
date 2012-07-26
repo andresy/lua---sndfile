@@ -84,7 +84,7 @@ static int sndfile_new(lua_State *L)
         luaL_error(L, "invalid key/value (must be string/number) in info table");
 
       key = lua_tostring(L, -2);
-      value = (int)lua_tonumber(L, -3);
+      value = (int)lua_tonumber(L, -1);
 
       if(!strcmp(key, "samplerate"))
         snd->info.samplerate = value;
@@ -98,18 +98,22 @@ static int sndfile_new(lua_State *L)
     }
   }
 
-  if( ((mode == SFM_WRITE) || (mode == SFM_RDWR)) && !sf_format_check(&snd->info) )
-    luaL_error(L, "invalid info table");
-
   if(!(snd->file = sf_open(path, mode, &snd->info)))
-    luaL_error(L, "could not open file <%s>", path);
+    luaL_error(L, "could not open file <%s> (%s)", path, sf_strerror(NULL));
   
   return 1;
 }
 
 static int sndfile_info(lua_State *L)
 {  
-  SndFile *snd = luaT_checkudata(L, 1, sndfile_id);
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
   lua_newtable(L);
   lua_pushnumber(L, snd->info.frames);
   lua_setfield(L, -2, "frames");
@@ -128,7 +132,13 @@ static int sndfile_info(lua_State *L)
 
 static int sndfile_free(lua_State *L)
 {
-  SndFile *snd = luaT_checkudata(L, 1, sndfile_id);
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
 
   if(snd->file)
     sf_close(snd->file);
@@ -138,9 +148,87 @@ static int sndfile_free(lua_State *L)
   return 0;
 }
 
+static int sndfile_error(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(sf_error(snd->file))
+  {
+    lua_pushstring(L, sf_strerror(snd->file));
+    return 1;
+  }
+
+  return 0;
+}
+
+
+static int sndfile_seek(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  long frames = 0;
+  int whence = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    frames = lua_tonumber(L, 2);
+    whence = SEEK_SET;
+  }
+  else if((narg == 3) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2) & lua_isnumber(L, 3))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    frames = lua_tonumber(L, 2);
+    whence = lua_tonumber(L, 3);
+    luaL_argcheck(L, whence >= 0 && whence <= 2, 3, "whence parameter must be 0 (absolute), 1 (relative), 2 (to the end)");
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile #frame [whence (0,1,2)]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  sf_seek(snd->file, frames, whence);
+
+  return 0;
+}
+
+static int sndfile_sync(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  sf_write_sync(snd->file);
+
+  return 0;
+}
+
 static int sndfile_close(lua_State *L)
 {
-  SndFile *snd = luaT_checkudata(L, 1, sndfile_id);
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
 
   if(snd->file)
     sf_close(snd->file);
@@ -151,16 +239,16 @@ static int sndfile_close(lua_State *L)
 }
 
 #define SNDFILE_IMPLEMENT_READ(NAME, CNAME)                             \
-  static int sndfile_read##CNAME(lua_State *L)                           \
+  static int sndfile_read##CNAME(lua_State *L)                          \
   {                                                                     \
     int narg = lua_gettop(L);                                           \
     SndFile *snd = NULL;                                                \
     TH##CNAME##Tensor *tensor = NULL;                                   \
-    long nframe = -1;                                                   \
     long nframeread = -1;                                               \
                                                                         \
     if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2)) \
     {                                                                   \
+      long nframe = -1;                                                 \
       snd = luaT_toudata(L, 1, sndfile_id);                             \
       nframe = lua_tonumber(L, 2);                                      \
       luaL_argcheck(L, nframe > 0, 2, "the number of frames must be positive"); \
@@ -190,8 +278,13 @@ static int sndfile_close(lua_State *L)
       TH##CNAME##Tensor_free(tensorc);                                  \
     }                                                                   \
                                                                         \
-    if(nframeread != tensor->size[0])                                   \
-      TH##CNAME##Tensor_resize2d(tensor, nframeread, tensor->size[1]);  \
+    if(lua_isnumber(L, 2))                                              \
+    {                                                                   \
+      if(nframeread != tensor->size[0])                                 \
+        TH##CNAME##Tensor_resize2d(tensor, nframeread, tensor->size[1]); \
+    }                                                                   \
+    else                                                                \
+      lua_pushnumber(L, nframeread);                                    \
                                                                         \
     return 1;                                                           \
   }
@@ -201,13 +294,54 @@ SNDFILE_IMPLEMENT_READ(int, Int)
 SNDFILE_IMPLEMENT_READ(float, Float)
 SNDFILE_IMPLEMENT_READ(double, Double)
 
+#define SNDFILE_IMPLEMENT_WRITE(NAME, CNAME)                            \
+  static int sndfile_write##CNAME(lua_State *L)                         \
+  {                                                                     \
+    int narg = lua_gettop(L);                                           \
+    SndFile *snd = NULL;                                                \
+    TH##CNAME##Tensor *tensor = NULL;                                   \
+    long nframewrite = -1;                                              \
+                                                                        \
+    if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && luaT_isudata(L, 2, torch_##CNAME##Tensor_id)) \
+    {                                                                   \
+      snd = luaT_toudata(L, 1, sndfile_id);                             \
+      tensor = luaT_toudata(L, 2, torch_##CNAME##Tensor_id);            \
+      luaL_argcheck(L, tensor->nDimension == 2, 2, "the tensor must have 2 dimensions (nframe x channels)"); \
+      luaL_argcheck(L, tensor->size[1] == snd->info.channels, 2, "dimension 2 size must be equal to the number of channels"); \
+    }                                                                   \
+    else                                                                \
+      luaL_error(L, "expected arguments: SndFile Tensor");              \
+                                                                        \
+    if(!snd->file)                                                      \
+      luaL_error(L, "trying to write in a closed file");                \
+                                                                        \
+    tensor = TH##CNAME##Tensor_newContiguous(tensor);                   \
+    nframewrite = sf_write_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]*tensor->size[1]); \
+    lua_pushnumber(L, nframewrite);                                     \
+    TH##CNAME##Tensor_free(tensor);                                     \
+                                                                        \
+    return 1;                                                           \
+  }
+
+SNDFILE_IMPLEMENT_WRITE(short, Short)
+SNDFILE_IMPLEMENT_WRITE(int, Int)
+SNDFILE_IMPLEMENT_WRITE(float, Float)
+SNDFILE_IMPLEMENT_WRITE(double, Double)
+
 static const struct luaL_Reg sndfile_SndFile__ [] = {
+  {"error", sndfile_error},
   {"info", sndfile_info},
   {"close", sndfile_close},
+  {"seek", sndfile_seek},
+  {"sync", sndfile_sync},
   {"readShort", sndfile_readShort},
   {"readInt", sndfile_readInt},
   {"readFloat", sndfile_readFloat},
   {"readDouble", sndfile_readDouble},
+  {"writeShort", sndfile_writeShort},
+  {"writeInt", sndfile_writeInt},
+  {"writeFloat", sndfile_writeFloat},
+  {"writeDouble", sndfile_writeDouble},
   {NULL, NULL}
 };
 
