@@ -1,2 +1,3 @@
+require 'torch'
 require 'libsndfile'
 
