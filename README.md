@@ -4,7 +4,7 @@ The package provide a interface to the [libsndfile](http://www.mega-nerd.com/lib
 
 ## Installation
 
-``` lua
+``` sh
 torch-pkg install sndfile
 ```
 
