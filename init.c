@@ -104,10 +104,10 @@ static int sndfile_new(lua_State *L)
           luaL_error(L, "format in info must be a string");
 
         format = sndfile_format_string2number(lua_tostring(L, -1));
-        if(format > 0)
+        if(format >= 0)
           snd->info.format |= format;
         else
-          luaL_error(L, "invalid format (please check the available list)");
+          luaL_error(L, "invalid format -- list of valid format:\n%s", sndfile_format_available);
       }
       else if(!strcmp(key, "subformat"))
       {
@@ -117,10 +117,10 @@ static int sndfile_new(lua_State *L)
           luaL_error(L, "subformat in info must be a string");
 
         subformat = sndfile_subformat_string2number(lua_tostring(L, -1));
-        if(subformat > 0)
+        if(subformat >= 0)
           snd->info.format |= subformat;
         else
-          luaL_error(L, "invalid subformat (please check the available list)");
+          luaL_error(L, "invalid subformat -- list of valid subformat:\n%s", sndfile_subformat_available);
       }
       else if(!strcmp(key, "endian"))
       {
@@ -130,10 +130,10 @@ static int sndfile_new(lua_State *L)
           luaL_error(L, "endian in info must be a string");
 
         endian = sndfile_endian_string2number(lua_tostring(L, -1));
-        if(endian > 0)
+        if(endian >= 0)
           snd->info.format |= endian;
         else
-          luaL_error(L, "invalid endian (please check the available list)");
+          luaL_error(L, "invalid endian -- list of valid endian:\n%s", sndfile_endian_available);
       }
       else
         luaL_error(L, "invalid key <%s> (must be samplerate | channels | format | subformat | endian)", key);
@@ -393,11 +393,19 @@ static const struct luaL_Reg sndfile_SndFile__ [] = {
   {NULL, NULL}
 };
 
+static const struct luaL_Reg sndfile_global__ [] = {
+  {"formatlist", sndfile_formatlist},
+  {"subformatlist", sndfile_subformatlist},
+  {"endianlist", sndfile_endianlist},
+  {NULL, NULL}
+};
+
 DLL_EXPORT int luaopen_libsndfile(lua_State *L)
 {
   lua_newtable(L);
   lua_pushvalue(L, -1);
   lua_setfield(L, LUA_GLOBALSINDEX, "sndfile");
+  luaL_register(L, NULL, sndfile_global__);
 
   torch_ShortTensor_id = luaT_checktypename2id(L, "torch.ShortTensor");
   torch_IntTensor_id = luaT_checktypename2id(L, "torch.IntTensor");

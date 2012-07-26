@@ -160,6 +160,115 @@ static const char* sndfile_format_number2string(int format)
   return NULL;
 }
 
+static int sndfile_formatlist(lua_State *L)
+{
+  lua_newtable(L);
+
+  lua_pushstring(L, "Microsoft WAV format (little endian).");
+  lua_setfield(L, -2, "WAV");
+
+  lua_pushstring(L, "Apple/SGI AIFF format (big endian).");
+  lua_setfield(L, -2, "AIFF");
+
+  lua_pushstring(L, "Sun/NeXT AU format (big endian).");
+  lua_setfield(L, -2, "AU");
+
+  lua_pushstring(L, "RAW PCM data.");
+  lua_setfield(L, -2, "RAW");
+
+  lua_pushstring(L, "Ensoniq PARIS file format.");
+  lua_setfield(L, -2, "PAF");
+
+  lua_pushstring(L, "Amiga IFF / SVX8 / SV16 format.");
+  lua_setfield(L, -2, "SVX");
+
+  lua_pushstring(L, "Sphere NIST format.");
+  lua_setfield(L, -2, "NIST");
+
+  lua_pushstring(L, "VOC files.");
+  lua_setfield(L, -2, "VOC");
+
+  lua_pushstring(L, "Berkeley/IRCAM/CARL");
+  lua_setfield(L, -2, "IRCAM");
+
+  lua_pushstring(L, "Sonic Foundry's 64 bit RIFF/WAV");
+  lua_setfield(L, -2, "W64");
+
+  lua_pushstring(L, "Matlab (tm) V4.2 / GNU Octave 2.0");
+  lua_setfield(L, -2, "MAT4");
+
+  lua_pushstring(L, "Matlab (tm) V5.0 / GNU Octave 2.1");
+  lua_setfield(L, -2, "MAT5");
+
+  lua_pushstring(L, "Portable Voice Format");
+  lua_setfield(L, -2, "PVF");
+
+  lua_pushstring(L, "Fasttracker 2 Extended Instrument");
+  lua_setfield(L, -2, "XI");
+
+  lua_pushstring(L, "HMM Tool Kit format");
+  lua_setfield(L, -2, "HTK");
+
+  lua_pushstring(L, "Midi Sample Dump Standard");
+  lua_setfield(L, -2, "SDS");
+
+  lua_pushstring(L, "Audio Visual Research");
+  lua_setfield(L, -2, "AVR");
+
+  lua_pushstring(L, "MS WAVE with WAVEFORMATEX");
+  lua_setfield(L, -2, "WAVEX");
+
+  lua_pushstring(L, "Sound Designer 2");
+  lua_setfield(L, -2, "SD2");
+
+  lua_pushstring(L, "FLAC lossless file format");
+  lua_setfield(L, -2, "FLAC");
+
+  lua_pushstring(L, "Core Audio File format");
+  lua_setfield(L, -2, "CAF");
+
+  lua_pushstring(L, "Psion WVE format");
+  lua_setfield(L, -2, "WVE");
+
+  lua_pushstring(L, "Xiph OGG container");
+  lua_setfield(L, -2, "OGG");
+
+  lua_pushstring(L, "Akai MPC 2000 sampler");
+  lua_setfield(L, -2, "MPC2K");
+
+  lua_pushstring(L, "RF64 WAV file");
+  lua_setfield(L, -2, "RF64");
+
+  return 1;
+}
+
+static const char* sndfile_format_available = \
+"WAV: Microsoft WAV format (little endian).\n"
+"AIFF: Apple/SGI AIFF format (big endian).\n"
+"AU: Sun/NeXT AU format (big endian).\n"
+"RAW: RAW PCM data.\n"
+"PAF: Ensoniq PARIS file format.\n"
+"SVX: Amiga IFF / SVX8 / SV16 format.\n"
+"NIST: Sphere NIST format.\n"
+"VOC: VOC files.\n"
+"IRCAM: Berkeley/IRCAM/CARL\n"
+"W64: Sonic Foundry's 64 bit RIFF/WAV\n"
+"MAT4: Matlab (tm) V4.2 / GNU Octave 2.0\n"
+"MAT5: Matlab (tm) V5.0 / GNU Octave 2.1\n"
+"PVF: Portable Voice Format\n"
+"XI: Fasttracker 2 Extended Instrument\n"
+"HTK: HMM Tool Kit format\n"
+"SDS: Midi Sample Dump Standard\n"
+"AVR: Audio Visual Research\n"
+"WAVEX: MS WAVE with WAVEFORMATEX\n"
+"SD2: Sound Designer 2\n"
+"FLAC: FLAC lossless file format\n"
+"CAF: Core Audio File format\n"
+"WVE: Psion WVE format\n"
+"OGG: Xiph OGG container\n"
+"MPC2K: Akai MPC 2000 sampler\n"
+"RF64: RF64 WAV file\n";
+                      
 static int sndfile_subformat_string2number(const char *str)
 {
   if(!strcmp(str, "PCMS8")) /* Signed 8 bit data */
@@ -310,6 +419,107 @@ static const char* sndfile_subformat_number2string(int format)
   return NULL;
 }
 
+static int sndfile_subformatlist(lua_State *L)
+{
+  lua_newtable(L);
+
+  lua_pushstring(L, "Signed 8 bit data");
+  lua_setfield(L, -2, "PCMS8");
+
+  lua_pushstring(L, "Signed 16 bit data");
+  lua_setfield(L, -2, "PCM16");
+
+  lua_pushstring(L, "Signed 24 bit data");
+  lua_setfield(L, -2, "PCM24");
+
+  lua_pushstring(L, "Signed 32 bit data");
+  lua_setfield(L, -2, "PCM32");
+
+  lua_pushstring(L, "Unsigned 8 bit data (WAV and RAW only)");
+  lua_setfield(L, -2, "PCMU8");
+
+  lua_pushstring(L, "32 bit float data");
+  lua_setfield(L, -2, "FLOAT");
+
+  lua_pushstring(L, "64 bit float data");
+  lua_setfield(L, -2, "DOUBLE");
+
+  lua_pushstring(L, "U-Law encoded.");
+  lua_setfield(L, -2, "ULAW");
+
+  lua_pushstring(L, "A-Law encoded.");
+  lua_setfield(L, -2, "ALAW");
+
+  lua_pushstring(L, "IMA ADPCM.");
+  lua_setfield(L, -2, "IMAADPCM");
+
+  lua_pushstring(L, "Microsoft ADPCM.");
+  lua_setfield(L, -2, "MSADPCM");
+
+  lua_pushstring(L, "GSM 6.10 encoding.");
+  lua_setfield(L, -2, "GSM610");
+
+  lua_pushstring(L, "Oki Dialogic ADPCM encoding.");
+  lua_setfield(L, -2, "VOXADPCM");
+
+  lua_pushstring(L, "32kbs G721 ADPCM encoding.");
+  lua_setfield(L, -2, "G72132");
+
+  lua_pushstring(L, "24kbs G723 ADPCM encoding.");
+  lua_setfield(L, -2, "G72324");
+
+  lua_pushstring(L, "40kbs G723 ADPCM encoding.");
+  lua_setfield(L, -2, "G72340");
+
+  lua_pushstring(L, "12 bit Delta Width Variable Word encoding.");
+  lua_setfield(L, -2, "DWVW12");
+
+  lua_pushstring(L, "16 bit Delta Width Variable Word encoding.");
+  lua_setfield(L, -2, "DWVW16");
+
+  lua_pushstring(L, "24 bit Delta Width Variable Word encoding.");
+  lua_setfield(L, -2, "DWVW24");
+
+  lua_pushstring(L, "N bit Delta Width Variable Word encoding.");
+  lua_setfield(L, -2, "DWVWN");
+
+  lua_pushstring(L, "8 bit differential PCM (XI only)");
+  lua_setfield(L, -2, "DPCM8");
+
+  lua_pushstring(L, "16 bit differential PCM (XI only)");
+  lua_setfield(L, -2, "DPCM16");
+
+  lua_pushstring(L, "Xiph Vorbis encoding.");
+  lua_setfield(L, -2, "VORBIS");
+
+  return 1;
+}
+
+static const char* sndfile_subformat_available = \
+"PCMS8: Signed 8 bit data\n"
+"PCM16: Signed 16 bit data\n"
+"PCM24: Signed 24 bit data\n"
+"PCM32: Signed 32 bit data\n"
+"PCMU8: Unsigned 8 bit data (WAV and RAW only)\n"
+"FLOAT: 32 bit float data\n"
+"DOUBLE: 64 bit float data\n"
+"ULAW: U-Law encoded.\n"
+"ALAW: A-Law encoded.\n"
+"IMAADPCM: IMA ADPCM.\n"
+"MSADPCM: Microsoft ADPCM.\n"
+"GSM610: GSM 6.10 encoding.\n"
+"VOXADPCM: Oki Dialogic ADPCM encoding.\n"
+"G72132: 32kbs G721 ADPCM encoding.\n"
+"G72324: 24kbs G723 ADPCM encoding.\n"
+"G72340: 40kbs G723 ADPCM encoding.\n"
+"DWVW12: 12 bit Delta Width Variable Word encoding.\n"
+"DWVW16: 16 bit Delta Width Variable Word encoding.\n"
+"DWVW24: 24 bit Delta Width Variable Word encoding.\n"
+"DWVWN: N bit Delta Width Variable Word encoding.\n"
+"DPCM8: 8 bit differential PCM (XI only)\n"
+"DPCM16: 16 bit differential PCM (XI only)\n"
+"VORBIS: Xiph Vorbis encoding.\n";
+                      
 static int sndfile_endian_string2number(const char *str)
 {
   if(!strcmp(str, "FILE")) /* Default file endian-ness. */
@@ -346,3 +556,28 @@ static const char* sndfile_endian_number2string(int format)
   return NULL;
 }
 
+static int sndfile_endianlist(lua_State *L)
+{
+  lua_newtable(L);
+
+  lua_pushstring(L, "Default file endian-ness.");
+  lua_setfield(L, -2, "FILE");
+
+  lua_pushstring(L, "Force little endian-ness.");
+  lua_setfield(L, -2, "LITTLE");
+
+  lua_pushstring(L, "Force big endian-ness.");
+  lua_setfield(L, -2, "BIG");
+
+  lua_pushstring(L, "Force CPU endian-ness.");
+  lua_setfield(L, -2, "CPU");
+
+  return 1;
+}
+
+static const char* sndfile_endian_available = \
+"FILE: Default file endian-ness.\n"
+"LITTLE: Force little endian-ness.\n"
+"BIG: Force big endian-ness.\n"
+"CPU: Force CPU endian-ness.\n";
+                      
