@@ -3,6 +3,7 @@
 #include <luaT.h>
 #include <string.h>
 #include "TH.h"
+#include "format.h"
 
 const void* sndfile_id;
 const void* torch_ShortTensor_id;
@@ -78,22 +79,65 @@ static int sndfile_new(lua_State *L)
     while (lua_next(L, hasinfo) != 0)
     {
       const char *key;
-      int value;
 
-      if(!lua_isstring(L, -2) || !lua_isnumber(L, -1))
-        luaL_error(L, "invalid key/value (must be string/number) in info table");
-
+      if(!lua_isstring(L, -2))
+        luaL_error(L, "keys in info must be strings");
       key = lua_tostring(L, -2);
-      value = (int)lua_tonumber(L, -1);
 
       if(!strcmp(key, "samplerate"))
-        snd->info.samplerate = value;
+      {
+        if(!lua_isnumber(L, -1))
+          luaL_error(L, "samplerate in info must be a number");
+        snd->info.samplerate = (int)lua_tonumber(L, -1);
+      }
       else if(!strcmp(key, "channels"))
-        snd->info.channels = value;
+      {
+        if(!lua_isnumber(L, -1))
+          luaL_error(L, "channels in info must be a number");
+        snd->info.channels = (int)lua_tonumber(L, -1);
+      }
       else if(!strcmp(key, "format"))
-        snd->info.format = value;
+      {
+        int format;
+
+        if(!lua_isstring(L, -1))
+          luaL_error(L, "format in info must be a string");
+
+        format = sndfile_format_string2number(lua_tostring(L, -1));
+        if(format > 0)
+          snd->info.format |= format;
+        else
+          luaL_error(L, "invalid format (please check the available list)");
+      }
+      else if(!strcmp(key, "subformat"))
+      {
+        int subformat;
+
+        if(!lua_isstring(L, -1))
+          luaL_error(L, "subformat in info must be a string");
+
+        subformat = sndfile_subformat_string2number(lua_tostring(L, -1));
+        if(subformat > 0)
+          snd->info.format |= subformat;
+        else
+          luaL_error(L, "invalid subformat (please check the available list)");
+      }
+      else if(!strcmp(key, "endian"))
+      {
+        int endian;
+
+        if(!lua_isstring(L, -1))
+          luaL_error(L, "endian in info must be a string");
+
+        endian = sndfile_endian_string2number(lua_tostring(L, -1));
+        if(endian > 0)
+          snd->info.format |= endian;
+        else
+          luaL_error(L, "invalid endian (please check the available list)");
+      }
       else
-        luaL_error(L, "invalid key <%s> (must be samplerate | channels | format)", key);
+        luaL_error(L, "invalid key <%s> (must be samplerate | channels | format | subformat | endian)", key);
+
       lua_pop(L, 1);
     }
   }
@@ -121,8 +165,12 @@ static int sndfile_info(lua_State *L)
   lua_setfield(L, -2, "samplerate");
   lua_pushnumber(L, snd->info.channels);
   lua_setfield(L, -2, "channels");
-  lua_pushnumber(L, snd->info.format);
+  lua_pushstring(L, sndfile_format_number2string(snd->info.format));
   lua_setfield(L, -2, "format");
+  lua_pushstring(L, sndfile_subformat_number2string(snd->info.format));
+  lua_setfield(L, -2, "subformat");
+  lua_pushstring(L, sndfile_endian_number2string(snd->info.format));
+  lua_setfield(L, -2, "endian");
   lua_pushnumber(L, snd->info.sections);
   lua_setfield(L, -2, "sections");
   lua_pushboolean(L, snd->info.seekable);

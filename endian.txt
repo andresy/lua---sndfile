@@ -1,0 +1,4 @@
+          SF_ENDIAN_FILE         = 0x00000000,   /* Default file endian-ness. */
+          SF_ENDIAN_LITTLE       = 0x10000000,   /* Force little endian-ness. */
+          SF_ENDIAN_BIG          = 0x20000000,   /* Force big endian-ness. */
+          SF_ENDIAN_CPU          = 0x30000000,   /* Force CPU endian-ness. */
