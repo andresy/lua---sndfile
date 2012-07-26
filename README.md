@@ -24,10 +24,11 @@ Example:
 >
 > -- ok, now write the stuff in WAV
 > f = sndfile.SndFile('blah.wav', 'w', {samplerate=16000, channels=1, format="WAV", subformat="PCM16"})
+> f:string('title', 'dude it is awesome') -- write some title in there
 > f:writeShort(x)
 > f:close() -- done
 ```
 
-For more details, you can check [libsndfile documentation](http://www.mega-nerd.com/libsndfile/) library.
+For more details, you can check [libsndfile documentation](http://www.mega-nerd.com/libsndfile/).
 For supported formats, see sndfile.formatlist(), sndfile.subformatlist() and sndfile.endianlist().
 
