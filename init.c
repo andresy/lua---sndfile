@@ -919,6 +919,221 @@ static int sndfile_vbrencodingquality(lua_State *L)
   return 1;
 }
 
+static void sndfile_broadcast_getstring(lua_State *L, int arg, const char *field, char *target, long maxsize)
+{
+  lua_getfield(L, arg, field);
+  if(lua_isstring(L, -1))
+  {
+    size_t size;
+    const char *str = lua_tolstring(L, -1, &size);
+    memcpy(target, str, (size < maxsize ? size : maxsize));
+    lua_pop(L, 1);
+  }
+  else if(lua_isnil(L, -1))
+    lua_pop(L, 1);
+  else
+    luaL_error(L, "field %s should be a string", field);
+}
+
+static long sndfile_broadcast_getnumber(lua_State *L, int arg, const char *field)
+{
+  long res = 0;
+  lua_getfield(L, arg, field);
+  if(lua_isnumber(L, -1))
+    res = (long)lua_tonumber(L, -1);
+  else
+    luaL_error(L, "filed %s should be a number", field);
+  return res;
+}
+
+static int sndfile_broadcastinfo(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  SF_BROADCAST_INFO info;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_istable(L, 2))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile [table]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(narg == 1)
+  {
+    if(sf_command(snd->file, SFC_GET_BROADCAST_INFO, &info, sizeof(info)))
+    {
+      lua_newtable(L);
+      lua_pushlstring(L, info.description, 256);
+      lua_setfield(L, -2, "description");
+      lua_pushlstring(L, info.originator, 32);
+      lua_setfield(L, -2, "originator");
+      lua_pushlstring(L, info.originator_reference, 32);
+      lua_setfield(L, -2, "originatorreference");
+      lua_pushlstring(L, info.origination_date, 10);
+      lua_setfield(L, -2, "originationdate");
+      lua_pushlstring(L, info.origination_time, 8);
+      lua_setfield(L, -2, "originationtime");
+      lua_pushnumber(L, info.time_reference_low);
+      lua_setfield(L, -2, "timereferencelow");
+      lua_pushnumber(L, info.time_reference_high);
+      lua_setfield(L, -2, "timereferencehigh");
+      lua_pushnumber(L, info.version);
+      lua_setfield(L, -2, "version");
+      lua_pushlstring(L, info.umid, 64);
+      lua_setfield(L, -2, "umid");
+      lua_pushlstring(L, info.reserved, 190);
+      lua_setfield(L, -2, "reserved");
+      lua_pushnumber(L, info.coding_history_size);
+      lua_setfield(L, -2, "codinghistorysize");
+      lua_pushlstring(L, info.coding_history, 256);
+      lua_setfield(L, -2, "codinghistory");
+      return 1;
+    }
+    else
+      return 0;
+  }
+  else
+  {
+    sndfile_broadcast_getstring(L, 2, "description", info.description, 256);
+    sndfile_broadcast_getstring(L, 2, "originator", info.originator, 32);
+    sndfile_broadcast_getstring(L, 2, "originatorreference", info.originator_reference, 32);
+    sndfile_broadcast_getstring(L, 2, "originationdate", info.origination_date, 10);
+    sndfile_broadcast_getstring(L, 2, "originationtime", info.origination_time, 8);
+    info.time_reference_low = sndfile_broadcast_getnumber(L, 2, "timereferencelow");
+    info.time_reference_high = sndfile_broadcast_getnumber(L, 2, "timereferencehigh");
+    info.version = sndfile_broadcast_getnumber(L, 2, "version");
+    sndfile_broadcast_getstring(L, 2, "umid", info.umid, 64);
+    sndfile_broadcast_getstring(L, 2, "reserved", info.reserved, 190);
+    info.coding_history_size = sndfile_broadcast_getnumber(L, 2, "codinghistorysize");
+    info.coding_history_size = sndfile_broadcast_getnumber(L, 2, "codinghistorysize");
+    sndfile_broadcast_getstring(L, 2, "codinghistory", info.coding_history, 256);
+    lua_pushboolean(L, sf_command(snd->file, SFC_SET_BROADCAST_INFO, &info, sizeof(info)));
+  }
+
+  return 0;
+}
+
+static int sndfile_loopinfo(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  SF_LOOP_INFO info;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(sf_command(snd->file, SFC_GET_LOOP_INFO, &info, sizeof(info)))
+  {
+    lua_newtable(L);
+    lua_pushnumber(L, info.time_sig_num);
+    lua_setfield(L, -2, "timesignum");
+    lua_pushnumber(L, info.time_sig_den);
+    lua_setfield(L, -2, "timesigden");
+    lua_pushnumber(L, info.loop_mode);
+    lua_setfield(L, -2, "loopmode");
+    lua_pushnumber(L, info.num_beats);
+    lua_setfield(L, -2, "numbeats");
+    lua_pushnumber(L, info.bpm);
+    lua_setfield(L, -2, "bpm");
+    lua_pushnumber(L, info.root_key);
+    lua_setfield(L, -2, "rootkey");
+    return 1;
+  }
+  else
+    return 0;
+
+  return 0;
+}
+
+static int sndfile_instrument(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  SF_INSTRUMENT info;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_istable(L, 2))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile [table]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(narg == 1)
+  {
+    if(sf_command(snd->file, SFC_GET_INSTRUMENT, &info, sizeof(info)))
+    {
+      int i;
+
+      lua_newtable(L);
+      lua_pushnumber(L, info.gain);
+      lua_setfield(L, -2, "gain");
+      lua_pushnumber(L, info.basenote);
+      lua_setfield(L, -2, "basenote");
+      lua_pushnumber(L, info.detune);
+      lua_setfield(L, -2, "detune");
+      lua_pushnumber(L, info.velocity_lo);
+      lua_setfield(L, -2, "velocitylo");
+      lua_pushnumber(L, info.velocity_hi);
+      lua_setfield(L, -2, "velocityhi");
+
+      lua_newtable(L); /* loops table */
+      for(i = 0; i < info.loop_count; i++)
+      {
+        lua_newtable(L);
+        switch(info.loops[i].mode)
+        {
+          case(SF_LOOP_NONE):
+            lua_pushstring(L, "none");
+            break;
+          case(SF_LOOP_FORWARD):
+            lua_pushstring(L, "forward");
+            break;
+          case(SF_LOOP_BACKWARD):
+            lua_pushstring(L, "backward");
+            break;
+          case(SF_LOOP_ALTERNATING):
+            lua_pushstring(L, "alternating");
+            break;
+          default:
+            lua_pushstring(L, "unknown");
+        }
+        lua_setfield(L, -2, "mode");
+        lua_pushnumber(L, info.loops[i].start);
+        lua_setfield(L, -2, "start");
+        lua_pushnumber(L, info.loops[i].end);
+        lua_setfield(L, -2, "end");
+        lua_pushnumber(L, info.loops[i].count);
+        lua_setfield(L, -2, "count");
+
+        lua_pushnumber(L, i);
+        lua_rawset(L, -3);
+      }
+      lua_setfield(L, -2, "loops");
+      return 1;
+    }
+    else
+      return 0;
+  }
+  else
+  {
+    luaL_error(L, "not implemented yet");
+  }
+
+  return 0;
+}
+
 static const struct luaL_Reg sndfile_SndFile__ [] = {
   {"error", sndfile_error},
   {"info", sndfile_info},
@@ -954,6 +1169,9 @@ static const struct luaL_Reg sndfile_SndFile__ [] = {
   {"embedfileinfo", sndfile_embedfileinfo},
   {"wavexambisonic", sndfile_wavexambisonic},
   {"vbrencodingquality", sndfile_vbrencodingquality},
+  {"broadcastinfo", sndfile_broadcastinfo},
+  {"loopinfo", sndfile_loopinfo},
+  {"instrument", sndfile_instrument},
   {NULL, NULL}
 };
 
