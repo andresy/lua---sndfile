@@ -431,6 +431,494 @@ SNDFILE_IMPLEMENT_WRITE(int, Int)
 SNDFILE_IMPLEMENT_WRITE(float, Float)
 SNDFILE_IMPLEMENT_WRITE(double, Double)
 
+static int sndfile_libversion(lua_State *L)
+{
+  long buffersize = 128;
+  char *buffer = luaT_alloc(L, buffersize);
+  long retsize;
+  while(1)
+  {
+    retsize = sf_command(NULL, SFC_GET_LIB_VERSION, buffer, buffersize);
+    if(buffersize <= retsize)
+    {
+      buffersize *= 2;
+      luaT_free(L, buffer);
+      buffer = luaT_alloc(L, buffersize);
+    }
+    else
+      break;
+  }
+  lua_pushstring(L, buffer);
+  return 1;
+}
+
+static int sndfile_loginfo(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  char buffer[2048];
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  sf_command(snd->file, SFC_GET_LOG_INFO, buffer, sizeof(buffer));
+  lua_pushstring(L, buffer);
+  return 1;
+}
+
+static int sndfile_signalmax(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  double max_val;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(!sf_command(snd->file, SFC_CALC_SIGNAL_MAX, &max_val, sizeof(max_val)))
+  {
+    lua_pushnumber(L, max_val);
+    return 1;
+  }
+  return 0;
+}
+
+static int sndfile_normsignalmax(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  double max_val;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(!sf_command(snd->file, SFC_CALC_NORM_SIGNAL_MAX, &max_val, sizeof(max_val)))
+  {
+    lua_pushnumber(L, max_val);
+    return 1;
+  }
+
+  return 0;
+}
+
+static int sndfile_maxallchannels(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  THDoubleTensor *max_val;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  max_val = THDoubleTensor_newWithSize1d(snd->info.channels);
+  luaT_pushudata(L, max_val, torch_DoubleTensor_id);
+
+  if(!sf_command(snd->file, SFC_CALC_MAX_ALL_CHANNELS, THDoubleTensor_data(max_val), sizeof(double)*snd->info.channels))
+    return 1;
+
+  return 0;
+}
+
+static int sndfile_headersignalmax(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  double max_val;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(sf_command(snd->file, SFC_GET_SIGNAL_MAX, &max_val, sizeof(max_val)))
+  {
+    lua_pushnumber(L, max_val);
+    return 1;
+  }
+  return 0;
+}
+
+static int sndfile_headermaxallchannels(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  THDoubleTensor *max_val;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  max_val = THDoubleTensor_newWithSize1d(snd->info.channels);
+  luaT_pushudata(L, max_val, torch_DoubleTensor_id);
+
+  if(sf_command(snd->file, SFC_GET_MAX_ALL_CHANNELS, THDoubleTensor_data(max_val), sizeof(double)*snd->info.channels))
+    return 1;
+
+  return 0;
+}
+
+static int sndfile_normmaxallchannels(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  THDoubleTensor *max_val;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  max_val = THDoubleTensor_newWithSize1d(snd->info.channels);
+  luaT_pushudata(L, max_val, torch_DoubleTensor_id);
+
+  if(!sf_command(snd->file, SFC_CALC_NORM_MAX_ALL_CHANNELS, THDoubleTensor_data(max_val), sizeof(double)*snd->info.channels))
+    return 1;
+
+  return 0;
+}
+
+
+static int sndfile_normfloat(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile [boolean]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(narg == 1)
+    lua_pushboolean(L, sf_command(snd->file, SFC_GET_NORM_FLOAT, NULL, 0));
+  else
+    lua_pushboolean(L, sf_command(snd->file, SFC_SET_NORM_FLOAT, NULL, (flag ? SF_TRUE : SF_FALSE)));
+
+  return 1;
+}
+
+static int sndfile_normdouble(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile [boolean]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(narg == 1)
+    lua_pushboolean(L, sf_command(snd->file, SFC_GET_NORM_DOUBLE, NULL, 0));
+  else
+    lua_pushboolean(L, sf_command(snd->file, SFC_SET_NORM_DOUBLE, NULL, (flag ? SF_TRUE : SF_FALSE)));
+
+  return 1;
+}
+
+static int sndfile_scalefloatintread(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile boolean");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_SET_SCALE_FLOAT_INT_READ, NULL, (flag ? SF_TRUE : SF_FALSE)));
+  return 1;
+}
+
+static int sndfile_scaleintfloatwrite(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile boolean");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_SET_SCALE_INT_FLOAT_WRITE, NULL, (flag ? SF_TRUE : SF_FALSE)));
+  return 1;
+}
+
+static int sndfile_addpeakchunk(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile boolean");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_SET_ADD_PEAK_CHUNK, NULL, (flag ? SF_TRUE : SF_FALSE)));
+  return 1;
+}
+
+static int sndfile_updateheadernow(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  sf_command(snd->file, SFC_UPDATE_HEADER_NOW, NULL, 0);
+  return 0;
+}
+
+static int sndfile_updateheaderauto(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile boolean");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_SET_UPDATE_HEADER_AUTO, NULL, (flag ? SF_TRUE : SF_FALSE)));
+  return 1;
+}
+
+static int sndfile_filetruncate(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  sf_count_t frames = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    frames = (sf_count_t)lua_tonumber(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile number");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_FILE_TRUNCATE, &frames, sizeof(frames)) == 0);
+  return 1;
+}
+
+static int sndfile_rawstartoffset(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  sf_count_t offset = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    offset = (sf_count_t)lua_tonumber(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile number");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_SET_RAW_START_OFFSET, &offset, sizeof(offset)) == 0);
+  return 1;
+}
+
+static int sndfile_clipping(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  int flag = 0;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    flag = lua_toboolean(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile [boolean]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(narg == 1)
+    lua_pushboolean(L, sf_command(snd->file, SFC_GET_CLIPPING, NULL, 0));
+  else
+    lua_pushboolean(L, sf_command(snd->file, SFC_SET_CLIPPING, NULL, (flag ? SF_TRUE : SF_FALSE)));
+
+  return 1;
+}
+
+static int sndfile_embedfileinfo(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  SF_EMBED_FILE_INFO info;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else
+    luaL_error(L, "expected arguments: SndFile");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(!sf_command(snd->file, SFC_GET_EMBED_FILE_INFO, &info, sizeof(info)))
+  {
+    lua_pushnumber(L, info.offset);
+    lua_pushnumber(L, info.length);
+    return 2;
+  }
+  return 0;
+}
+
+static int sndfile_wavexambisonic(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  const char *str = NULL;
+  int ret = 0;
+
+  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
+    snd = luaT_toudata(L, 1, sndfile_id);
+  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isstring(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    str = lua_tostring(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile [string (none/bformat)]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  if(narg == 1)
+    ret = sf_command(snd->file, SFC_WAVEX_GET_AMBISONIC, NULL, 0);
+  else
+  {
+    if(!strcmp(str, "none"))
+      ret = sf_command(snd->file, SFC_WAVEX_SET_AMBISONIC, NULL, SF_AMBISONIC_NONE);
+    else if(!strcmp(str, "bformat"))
+      ret = sf_command(snd->file, SFC_WAVEX_SET_AMBISONIC, NULL, SF_AMBISONIC_B_FORMAT);
+    else
+      luaL_error(L, "invalid format: must be none or bformat");
+  }
+
+  if(ret == SF_AMBISONIC_NONE)
+    lua_pushstring(L, "none");
+  else if(ret == SF_AMBISONIC_B_FORMAT)
+    lua_pushstring(L, "bformat");
+  else
+    lua_pushstring(L, "unsupported");
+  return 1;
+}
+
+static int sndfile_vbrencodingquality(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  double quality = 0;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    quality = lua_tonumber(L, 2);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile number");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+  luaL_argcheck(L, quality >= 0 && quality <= 1, 2, "quality must be between 0 and 1");
+
+  lua_pushboolean(L, sf_command(snd->file, SFC_SET_VBR_ENCODING_QUALITY, &quality, sizeof(quality)) == 0);
+  return 1;
+}
+
 static const struct luaL_Reg sndfile_SndFile__ [] = {
   {"error", sndfile_error},
   {"info", sndfile_info},
@@ -446,6 +934,26 @@ static const struct luaL_Reg sndfile_SndFile__ [] = {
   {"writeInt", sndfile_writeInt},
   {"writeFloat", sndfile_writeFloat},
   {"writeDouble", sndfile_writeDouble},
+  {"loginfo", sndfile_loginfo},
+  {"signalmax", sndfile_signalmax},
+  {"normsignalmax", sndfile_normsignalmax},
+  {"maxallchannels", sndfile_maxallchannels},
+  {"normmaxallchannels", sndfile_normmaxallchannels},
+  {"headersignalmax", sndfile_headersignalmax},
+  {"headermaxallchannels", sndfile_headermaxallchannels},
+  {"normfloat", sndfile_normfloat},
+  {"normdouble", sndfile_normdouble},
+  {"scalefloatintread", sndfile_scalefloatintread},
+  {"scaleintfloatwrite", sndfile_scaleintfloatwrite},
+  {"addpeakchunk", sndfile_addpeakchunk},
+  {"updateheadernow", sndfile_updateheadernow},
+  {"updateheaderauto", sndfile_updateheaderauto},
+  {"filetruncate", sndfile_filetruncate},
+  {"rawstartoffset", sndfile_rawstartoffset},
+  {"clipping", sndfile_clipping},
+  {"embedfileinfo", sndfile_embedfileinfo},
+  {"wavexambisonic", sndfile_wavexambisonic},
+  {"vbrencodingquality", sndfile_vbrencodingquality},
   {NULL, NULL}
 };
 
@@ -453,6 +961,7 @@ static const struct luaL_Reg sndfile_global__ [] = {
   {"formatlist", sndfile_formatlist},
   {"subformatlist", sndfile_subformatlist},
   {"endianlist", sndfile_endianlist},
+  {"libversion", sndfile_libversion},
   {NULL, NULL}
 };
 
