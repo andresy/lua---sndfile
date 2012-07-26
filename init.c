@@ -268,6 +268,61 @@ static int sndfile_sync(lua_State *L)
   return 0;
 }
 
+static int sndfile_string(lua_State *L)
+{
+  int narg = lua_gettop(L);
+  SndFile *snd = NULL;
+  const char *key = NULL;
+  const char *value = NULL;
+
+  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isstring(L, 2))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    key = lua_tostring(L, 2);
+  }
+  else if((narg == 3) && luaT_isudata(L, 1, sndfile_id) && lua_isstring(L, 2) && lua_isstring(L, 3))
+  {
+    snd = luaT_toudata(L, 1, sndfile_id);
+    key = lua_tostring(L, 2);
+    value = lua_tostring(L, 3);
+  }
+  else
+    luaL_error(L, "expected arguments: SndFile string [string]");
+
+  if(!snd->file)
+    luaL_error(L, "trying to operate on a closed file");
+
+#define SNDFILE_CHECK_STRING_KEY(NAME, CNAME)                           \
+  if(!strcmp(key, NAME))                                                \
+  {                                                                     \
+    if(value)                                                           \
+    {                                                                   \
+      lua_pushboolean(L, sf_set_string(snd->file, SF_STR_##CNAME, value) == 0); \
+      return 1;                                                         \
+    }                                                                   \
+    else                                                                \
+    {                                                                   \
+      lua_pushstring(L, sf_get_string(snd->file, SF_STR_##CNAME));      \
+      return 1;                                                         \
+    }                                                                   \
+  }
+
+  SNDFILE_CHECK_STRING_KEY("title", TITLE)
+  else SNDFILE_CHECK_STRING_KEY("copyright", COPYRIGHT)
+  else SNDFILE_CHECK_STRING_KEY("software", SOFTWARE)
+  else SNDFILE_CHECK_STRING_KEY("artist", ARTIST)
+  else SNDFILE_CHECK_STRING_KEY("comment", COMMENT)
+  else SNDFILE_CHECK_STRING_KEY("date", DATE)
+  else SNDFILE_CHECK_STRING_KEY("album", ALBUM)
+  else SNDFILE_CHECK_STRING_KEY("license", LICENSE)
+  else SNDFILE_CHECK_STRING_KEY("tracknumber", TRACKNUMBER)
+  else SNDFILE_CHECK_STRING_KEY("genre", GENRE)
+  else
+    luaL_error(L, "invalid string value (must be title|copyright|software|artist|comment|date|album|license|tracknumber|genre)");
+
+  return 0;
+}
+
 static int sndfile_close(lua_State *L)
 {
   int narg = lua_gettop(L);
@@ -379,6 +434,7 @@ SNDFILE_IMPLEMENT_WRITE(double, Double)
 static const struct luaL_Reg sndfile_SndFile__ [] = {
   {"error", sndfile_error},
   {"info", sndfile_info},
+  {"string", sndfile_string},
   {"close", sndfile_close},
   {"seek", sndfile_seek},
   {"sync", sndfile_sync},
