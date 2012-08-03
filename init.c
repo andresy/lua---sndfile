@@ -315,8 +315,12 @@ static int sndfile_string(lua_State *L)
   else SNDFILE_CHECK_STRING_KEY("date", DATE)
   else SNDFILE_CHECK_STRING_KEY("album", ALBUM)
   else SNDFILE_CHECK_STRING_KEY("license", LICENSE)
+#ifdef SF_STR_TRACKNUMBER
   else SNDFILE_CHECK_STRING_KEY("tracknumber", TRACKNUMBER)
+#endif
+#ifdef SF_STR_GENRE
   else SNDFILE_CHECK_STRING_KEY("genre", GENRE)
+#endif
   else
     luaL_error(L, "invalid string value (must be title|copyright|software|artist|comment|date|album|license|tracknumber|genre)");
 
