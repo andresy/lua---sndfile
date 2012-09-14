@@ -5,12 +5,6 @@
 #include "TH.h"
 #include "format.h"
 
-const void* sndfile_id;
-const void* torch_ShortTensor_id;
-const void* torch_IntTensor_id;
-const void* torch_FloatTensor_id;
-const void* torch_DoubleTensor_id;
-
 typedef struct SndFile__
 {
     SNDFILE *file;
@@ -71,7 +65,7 @@ static int sndfile_new(lua_State *L)
   snd->info.sections = 0;
   snd->info.seekable = 0;
 
-  luaT_pushudata(L, snd, sndfile_id);
+  luaT_pushudata(L, snd, "sndfile.SndFile");
 
   if(hasinfo)
   {
@@ -153,8 +147,8 @@ static int sndfile_info(lua_State *L)
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -183,8 +177,8 @@ static int sndfile_free(lua_State *L)
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -201,8 +195,8 @@ static int sndfile_error(lua_State *L)
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -226,15 +220,15 @@ static int sndfile_seek(lua_State *L)
   long frames = 0;
   int whence = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isnumber(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     frames = lua_tonumber(L, 2);
     whence = SEEK_SET;
   }
-  else if((narg == 3) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2) & lua_isnumber(L, 3))
+  else if((narg == 3) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isnumber(L, 2) & lua_isnumber(L, 3))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     frames = lua_tonumber(L, 2);
     whence = lua_tonumber(L, 3);
     luaL_argcheck(L, whence >= 0 && whence <= 2, 3, "whence parameter must be 0 (absolute), 1 (relative), 2 (to the end)");
@@ -255,8 +249,8 @@ static int sndfile_sync(lua_State *L)
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -275,14 +269,14 @@ static int sndfile_string(lua_State *L)
   const char *key = NULL;
   const char *value = NULL;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isstring(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isstring(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     key = lua_tostring(L, 2);
   }
-  else if((narg == 3) && luaT_isudata(L, 1, sndfile_id) && lua_isstring(L, 2) && lua_isstring(L, 3))
+  else if((narg == 3) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isstring(L, 2) && lua_isstring(L, 3))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     key = lua_tostring(L, 2);
     value = lua_tostring(L, 3);
   }
@@ -332,8 +326,8 @@ static int sndfile_close(lua_State *L)
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -353,19 +347,19 @@ static int sndfile_close(lua_State *L)
     TH##CNAME##Tensor *tensor = NULL;                                   \
     long nframeread = -1;                                               \
                                                                         \
-    if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2)) \
+    if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isnumber(L, 2)) \
     {                                                                   \
       long nframe = -1;                                                 \
-      snd = luaT_toudata(L, 1, sndfile_id);                             \
+      snd = luaT_toudata(L, 1, "sndfile.SndFile");                             \
       nframe = lua_tonumber(L, 2);                                      \
       luaL_argcheck(L, nframe > 0, 2, "the number of frames must be positive"); \
       tensor = TH##CNAME##Tensor_newWithSize2d(nframe, snd->info.channels); \
-      luaT_pushudata(L, tensor, torch_##CNAME##Tensor_id);              \
+      luaT_pushudata(L, tensor, "torch." #CNAME "Tensor");              \
     }                                                                   \
-    else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && luaT_isudata(L, 2, torch_##CNAME##Tensor_id)) \
+    else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && luaT_isudata(L, 2, "torch." #CNAME "Tensor")) \
     {                                                                   \
-      snd = luaT_toudata(L, 1, sndfile_id);                             \
-      tensor = luaT_toudata(L, 2, torch_##CNAME##Tensor_id);            \
+      snd = luaT_toudata(L, 1, "sndfile.SndFile");                             \
+      tensor = luaT_toudata(L, 2, "torch." #CNAME "Tensor");            \
       luaL_argcheck(L, tensor->nDimension == 2, 2, "the tensor must have 2 dimensions (nframe x channels)"); \
       luaL_argcheck(L, tensor->size[1] == snd->info.channels, 2, "dimension 2 size must be equal to the number of channels"); \
     }                                                                   \
@@ -409,10 +403,10 @@ SNDFILE_IMPLEMENT_READ(double, Double)
     TH##CNAME##Tensor *tensor = NULL;                                   \
     long nframewrite = -1;                                              \
                                                                         \
-    if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && luaT_isudata(L, 2, torch_##CNAME##Tensor_id)) \
+    if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && luaT_isudata(L, 2, "torch." #CNAME "Tensor")) \
     {                                                                   \
-      snd = luaT_toudata(L, 1, sndfile_id);                             \
-      tensor = luaT_toudata(L, 2, torch_##CNAME##Tensor_id);            \
+      snd = luaT_toudata(L, 1, "sndfile.SndFile");                             \
+      tensor = luaT_toudata(L, 2, "torch." #CNAME "Tensor");            \
       luaL_argcheck(L, tensor->nDimension == 2, 2, "the tensor must have 2 dimensions (nframe x channels)"); \
       luaL_argcheck(L, tensor->size[1] == snd->info.channels, 2, "dimension 2 size must be equal to the number of channels"); \
     }                                                                   \
@@ -462,8 +456,8 @@ static int sndfile_loginfo(lua_State *L)
   SndFile *snd = NULL;
   char buffer[2048];
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -481,8 +475,8 @@ static int sndfile_signalmax(lua_State *L)
   SndFile *snd = NULL;
   double max_val;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -503,8 +497,8 @@ static int sndfile_normsignalmax(lua_State *L)
   SndFile *snd = NULL;
   double max_val;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -526,8 +520,8 @@ static int sndfile_maxallchannels(lua_State *L)
   SndFile *snd = NULL;
   THDoubleTensor *max_val;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -535,7 +529,7 @@ static int sndfile_maxallchannels(lua_State *L)
     luaL_error(L, "trying to operate on a closed file");
 
   max_val = THDoubleTensor_newWithSize1d(snd->info.channels);
-  luaT_pushudata(L, max_val, torch_DoubleTensor_id);
+  luaT_pushudata(L, max_val, "torch.DoubleTensor");
 
   if(!sf_command(snd->file, SFC_CALC_MAX_ALL_CHANNELS, THDoubleTensor_data(max_val), sizeof(double)*snd->info.channels))
     return 1;
@@ -549,8 +543,8 @@ static int sndfile_headersignalmax(lua_State *L)
   SndFile *snd = NULL;
   double max_val;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -571,8 +565,8 @@ static int sndfile_headermaxallchannels(lua_State *L)
   SndFile *snd = NULL;
   THDoubleTensor *max_val;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -580,7 +574,7 @@ static int sndfile_headermaxallchannels(lua_State *L)
     luaL_error(L, "trying to operate on a closed file");
 
   max_val = THDoubleTensor_newWithSize1d(snd->info.channels);
-  luaT_pushudata(L, max_val, torch_DoubleTensor_id);
+  luaT_pushudata(L, max_val, "torch.DoubleTensor");
 
   if(sf_command(snd->file, SFC_GET_MAX_ALL_CHANNELS, THDoubleTensor_data(max_val), sizeof(double)*snd->info.channels))
     return 1;
@@ -594,8 +588,8 @@ static int sndfile_normmaxallchannels(lua_State *L)
   SndFile *snd = NULL;
   THDoubleTensor *max_val;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -603,7 +597,7 @@ static int sndfile_normmaxallchannels(lua_State *L)
     luaL_error(L, "trying to operate on a closed file");
 
   max_val = THDoubleTensor_newWithSize1d(snd->info.channels);
-  luaT_pushudata(L, max_val, torch_DoubleTensor_id);
+  luaT_pushudata(L, max_val, "torch.DoubleTensor");
 
   if(!sf_command(snd->file, SFC_CALC_NORM_MAX_ALL_CHANNELS, THDoubleTensor_data(max_val), sizeof(double)*snd->info.channels))
     return 1;
@@ -618,11 +612,11 @@ static int sndfile_normfloat(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
-  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
+  else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -645,11 +639,11 @@ static int sndfile_normdouble(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
-  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
+  else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -672,9 +666,9 @@ static int sndfile_scalefloatintread(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -693,9 +687,9 @@ static int sndfile_scaleintfloatwrite(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -714,9 +708,9 @@ static int sndfile_addpeakchunk(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -734,8 +728,8 @@ static int sndfile_updateheadernow(lua_State *L)
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -752,9 +746,9 @@ static int sndfile_updateheaderauto(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -773,9 +767,9 @@ static int sndfile_filetruncate(lua_State *L)
   SndFile *snd = NULL;
   sf_count_t frames = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isnumber(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     frames = (sf_count_t)lua_tonumber(L, 2);
   }
   else
@@ -794,9 +788,9 @@ static int sndfile_rawstartoffset(lua_State *L)
   SndFile *snd = NULL;
   sf_count_t offset = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isnumber(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     offset = (sf_count_t)lua_tonumber(L, 2);
   }
   else
@@ -815,11 +809,11 @@ static int sndfile_clipping(lua_State *L)
   SndFile *snd = NULL;
   int flag = 0;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
-  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isboolean(L, 2))
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
+  else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isboolean(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     flag = lua_toboolean(L, 2);
   }
   else
@@ -842,8 +836,8 @@ static int sndfile_embedfileinfo(lua_State *L)
   SndFile *snd = NULL;
   SF_EMBED_FILE_INFO info;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -866,11 +860,11 @@ static int sndfile_wavexambisonic(lua_State *L)
   const char *str = NULL;
   int ret = 0;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
-  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isstring(L, 2))
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
+  else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isstring(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     str = lua_tostring(L, 2);
   }
   else
@@ -906,9 +900,9 @@ static int sndfile_vbrencodingquality(lua_State *L)
   SndFile *snd = NULL;
   double quality = 0;
 
-  if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_isnumber(L, 2))
+  if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_isnumber(L, 2))
   {
-    snd = luaT_toudata(L, 1, sndfile_id);
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
     quality = lua_tonumber(L, 2);
   }
   else
@@ -956,10 +950,10 @@ static int sndfile_broadcastinfo(lua_State *L)
   SndFile *snd = NULL;
   SF_BROADCAST_INFO info;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
-  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_istable(L, 2))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
+  else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_istable(L, 2))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile [table]");
 
@@ -1027,8 +1021,8 @@ static int sndfile_loopinfo(lua_State *L)
   SndFile *snd = NULL;
   SF_LOOP_INFO info;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile");
 
@@ -1064,10 +1058,10 @@ static int sndfile_instrument(lua_State *L)
   SndFile *snd = NULL;
   SF_INSTRUMENT info;
 
-  if((narg == 1) && luaT_isudata(L, 1, sndfile_id))
-    snd = luaT_toudata(L, 1, sndfile_id);
-  else if((narg == 2) && luaT_isudata(L, 1, sndfile_id) && lua_istable(L, 2))
-    snd = luaT_toudata(L, 1, sndfile_id);
+  if((narg == 1) && luaT_isudata(L, 1, "sndfile.SndFile"))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
+  else if((narg == 2) && luaT_isudata(L, 1, "sndfile.SndFile") && lua_istable(L, 2))
+    snd = luaT_toudata(L, 1, "sndfile.SndFile");
   else
     luaL_error(L, "expected arguments: SndFile [table]");
 
@@ -1194,12 +1188,7 @@ DLL_EXPORT int luaopen_libsndfile(lua_State *L)
   lua_setfield(L, LUA_GLOBALSINDEX, "sndfile");
   luaL_register(L, NULL, sndfile_global__);
 
-  torch_ShortTensor_id = luaT_checktypename2id(L, "torch.ShortTensor");
-  torch_IntTensor_id = luaT_checktypename2id(L, "torch.IntTensor");
-  torch_FloatTensor_id = luaT_checktypename2id(L, "torch.FloatTensor");
-  torch_DoubleTensor_id = luaT_checktypename2id(L, "torch.DoubleTensor");
-
-  sndfile_id = luaT_newmetatable(L, "sndfile.SndFile", NULL, sndfile_new, sndfile_free, NULL);
+  luaT_newmetatable(L, "sndfile.SndFile", NULL, sndfile_new, sndfile_free, NULL);
   luaL_register(L, NULL, sndfile_SndFile__);
   lua_pop(L, 1);
 
