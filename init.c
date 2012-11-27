@@ -370,11 +370,11 @@ static int sndfile_close(lua_State *L)
       luaL_error(L, "trying to read in a closed file");                 \
                                                                         \
     if(TH##CNAME##Tensor_isContiguous(tensor))                          \
-      nframeread = sf_read_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]*tensor->size[1]); \
+      nframeread = sf_readf_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]); \
     else                                                                \
     {                                                                   \
       TH##CNAME##Tensor *tensorc = TH##CNAME##Tensor_newContiguous(tensor); \
-      nframeread = sf_read_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]*tensor->size[1]); \
+      nframeread = sf_readf_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]); \
       TH##CNAME##Tensor_copy(tensor, tensorc);                          \
       TH##CNAME##Tensor_free(tensorc);                                  \
     }                                                                   \
@@ -417,7 +417,7 @@ SNDFILE_IMPLEMENT_READ(double, Double)
       luaL_error(L, "trying to write in a closed file");                \
                                                                         \
     tensor = TH##CNAME##Tensor_newContiguous(tensor);                   \
-    nframewrite = sf_write_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]*tensor->size[1]); \
+    nframewrite = sf_writef_##NAME(snd->file, TH##CNAME##Tensor_data(tensor), tensor->size[0]); \
     lua_pushnumber(L, nframewrite);                                     \
     TH##CNAME##Tensor_free(tensor);                                     \
                                                                         \
