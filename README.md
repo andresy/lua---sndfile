@@ -5,12 +5,12 @@ The package provide a interface to the [libsndfile](http://www.mega-nerd.com/lib
 ## Installation
 
 ``` sh
-torch-pkg install sndfile
+luarocks install sndfile
 ```
 
 ## Example
 ``` lua
-> require 'libsndfile'
+> require 'sndfile'
 > f = sndfile.SndFile('blah.htk') -- open HTK file
 > print(f:info())
 {[samplerate] = 16000
