@@ -11,6 +11,5 @@ SET(src init.c)
 SET(luasrc init.lua)
 
 ADD_TORCH_PACKAGE(sndfile "${src}" "${luasrc}")
-#ADD_TORCH_DOK(dok nn "Machine Learning" "Neural Networks" 3.1)
 
 TARGET_LINK_LIBRARIES(sndfile luaT TH ${SNDFILE_LIBRARY})
