@@ -2,7 +2,7 @@ package = "sndfile"
 version = "scm-1"
 
 source = {
-   url = "git://github.com/torch/sndfile.git"
+   url = "git://github.com/andresy/lua---sndfile"
 }
 
 description = {
