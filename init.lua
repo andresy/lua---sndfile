@@ -1,3 +1,4 @@
 require 'torch'
-require 'libsndfile'
+local sndfile = require 'libsndfile'
 
+return sndfile

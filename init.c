@@ -1181,15 +1181,31 @@ static const struct luaL_Reg sndfile_global__ [] = {
   {NULL, NULL}
 };
 
+#if LUA_VERSION_NUM == 501
+static void luaL_setfuncs(lua_State *L, const luaL_Reg *l, int nup)
+{
+  luaL_checkstack(L, nup+1, "too many upvalues");
+  for (; l->name != NULL; l++) {  /* fill the table with given functions */
+    int i;
+    lua_pushstring(L, l->name);
+    for (i = 0; i < nup; i++)  /* copy upvalues to the top */
+      lua_pushvalue(L, -(nup+1));
+    lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
+    lua_settable(L, -(nup + 3));
+  }
+  lua_pop(L, nup);  /* remove upvalues */
+}
+#endif
+
 DLL_EXPORT int luaopen_libsndfile(lua_State *L)
 {
   lua_newtable(L);
+  luaL_setfuncs(L, sndfile_global__, 0);
   lua_pushvalue(L, -1);
-  lua_setfield(L, LUA_GLOBALSINDEX, "sndfile");
-  luaL_register(L, NULL, sndfile_global__);
+  lua_setglobal(L, "sndfile");
 
   luaT_newmetatable(L, "sndfile.SndFile", NULL, sndfile_new, sndfile_free, NULL);
-  luaL_register(L, NULL, sndfile_SndFile__);
+  luaL_setfuncs(L, sndfile_SndFile__, 0);
   lua_pop(L, 1);
 
   return 1;
