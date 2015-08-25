@@ -35,7 +35,6 @@ static sf_count_t bt_vio_seek(sf_count_t offset, int whence, void *user_data)
 static sf_count_t bt_vio_read(void *ptr, sf_count_t count, void *user_data)
 {
   struct byte_storage_buffer_t *buffer = user_data;
-  long i;
   if(count < 0 || buffer->position+count > buffer->storage->size)
     THError("out of bounds");
   memcpy(ptr, buffer->storage->data+buffer->position, count);
@@ -46,7 +45,6 @@ static sf_count_t bt_vio_read(void *ptr, sf_count_t count, void *user_data)
 static sf_count_t bt_vio_write(const void *ptr, sf_count_t count, void *user_data)
 {
   struct byte_storage_buffer_t *buffer = user_data;
-  long i;
   if(count < 0)
     THError("out of bounds");
   if(buffer->position+count > buffer->storage->size)
