@@ -1,14 +1,15 @@
-#include <stdio.h>
 #include <sndfile.h>
 #include <luaT.h>
 #include <string.h>
 #include "TH.h"
 #include "format.h"
+#include "buffer.h"
 
 typedef struct SndFile__
 {
-    SNDFILE *file;
-    SF_INFO info;
+  SNDFILE *file;
+  SF_INFO info;
+  struct byte_storage_buffer_t *buffer;
 } SndFile;
 
 static int sndfile_new(lua_State *L)
@@ -18,10 +19,17 @@ static int sndfile_new(lua_State *L)
   int hasinfo = 0;
   int mode = 0;
   SndFile *snd = NULL;
+  THByteStorage *storage = NULL;
 
   if((narg == 1) && lua_isstring(L, 1) )
   {
     path = lua_tostring(L, 1);
+    strmode = "r";
+    hasinfo = 0;
+  }
+  else if((narg == 1) && luaT_isudata(L, 1, "torch.ByteStorage") )
+  {
+    storage = luaT_toudata(L, 1, "torch.ByteStorage");
     strmode = "r";
     hasinfo = 0;
   }
@@ -31,15 +39,33 @@ static int sndfile_new(lua_State *L)
     strmode = lua_tostring(L, 2);
     hasinfo = 0;
   }
+  else if((narg == 2) && luaT_isudata(L, 1, "torch.ByteStorage") && lua_isstring(L, 2))
+  {
+    storage = luaT_toudata(L, 1, "torch.ByteStorage");
+    strmode = lua_tostring(L, 2);
+    hasinfo = 0;
+  }
   else if((narg == 2) && lua_isstring(L, 1)  && lua_istable(L, 2))
   {
     path = lua_tostring(L, 1);
     strmode = "r";
     hasinfo = 2;
   }
+  else if((narg == 2) && luaT_isudata(L, 1, "torch.ByteStorage") && lua_istable(L, 2))
+  {
+    storage = luaT_toudata(L, 1, "torch.ByteStorage");
+    strmode = "r";
+    hasinfo = 2;
+  }
   else if((narg == 3) && lua_isstring(L, 1)  && lua_isstring(L, 2) && lua_istable(L, 3))
   {
     path = lua_tostring(L, 1);
+    strmode = lua_tostring(L, 2);
+    hasinfo = 3;
+  }
+  else if((narg == 3) && luaT_isudata(L, 1, "torch.ByteStorage") && lua_isstring(L, 2) && lua_istable(L, 3))
+  {
+    storage = luaT_toudata(L, 1, "torch.ByteStorage");
     strmode = lua_tostring(L, 2);
     hasinfo = 3;
   }
@@ -64,8 +90,9 @@ static int sndfile_new(lua_State *L)
   snd->info.format = 0;
   snd->info.sections = 0;
   snd->info.seekable = 0;
+  snd->buffer = NULL;
 
-  luaT_pushudata(L, snd, "sndfile.SndFile");
+  luaT_pushudata(L, snd, "sndfile.SndFile"); /* GCed if there is an error below */
 
   if(hasinfo)
   {
@@ -136,14 +163,29 @@ static int sndfile_new(lua_State *L)
     }
   }
 
-  if(!(snd->file = sf_open(path, mode, &snd->info)))
-    luaL_error(L, "could not open file <%s> (%s)", path, sf_strerror(NULL));
-  
+  if(!path && !storage)
+    luaL_error(L, "please, provide a path or a valid ByteStorage");
+
+  if(path) {
+    if(!(snd->file = sf_open(path, mode, &snd->info)))
+      luaL_error(L, "could not open file <%s> (%s)", path, sf_strerror(NULL));
+  }
+  else {
+    struct byte_storage_buffer_t *buffer = luaT_alloc(L, sizeof(struct byte_storage_buffer_t));
+    buffer->position = 0;
+    buffer->storage = storage;
+    THByteStorage_retain(storage);
+    snd->buffer = buffer; /* buffer is GCed if there is an error */
+    if(!(snd->file = sf_open_virtual(&byte_storage_io, mode, &snd->info, buffer))) {
+      luaL_error(L, "could not open virtual buffer");
+    }
+  }
+
   return 1;
 }
 
 static int sndfile_info(lua_State *L)
-{  
+{
   int narg = lua_gettop(L);
   SndFile *snd = NULL;
 
@@ -184,6 +226,12 @@ static int sndfile_free(lua_State *L)
 
   if(snd->file)
     sf_close(snd->file);
+
+  if(snd->buffer) {
+    if(snd->buffer->storage)
+      THByteStorage_free(snd->buffer->storage);
+    free(snd->buffer);
+  }
 
   luaT_free(L, snd);
 

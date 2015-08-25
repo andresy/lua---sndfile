@@ -7,7 +7,7 @@ FIND_PACKAGE(SndFile REQUIRED)
 
 INCLUDE_DIRECTORIES(${SNDFILE_INCLUDE_DIR})
 
-SET(src init.c)
+SET(src init.c buffer.c)
 SET(luasrc init.lua)
 
 ADD_TORCH_PACKAGE(sndfile "${src}" "${luasrc}")
