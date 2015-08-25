@@ -60,7 +60,7 @@ static sf_count_t bt_vio_get_tell(void *user_data)
   return (sf_count_t)buffer->position;
 }
 
-SF_VIRTUAL_IO byte_storage_io = {
+SF_VIRTUAL_IO sndfile_byte_storage_io = {
   bt_vio_get_filelen,
   bt_vio_seek,
   bt_vio_read,
