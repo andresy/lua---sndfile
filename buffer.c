@@ -12,17 +12,17 @@ static sf_count_t bt_vio_seek(sf_count_t offset, int whence, void *user_data)
   switch(whence) {
     case SEEK_CUR:
       if(buffer->position+offset < 0 || buffer->position+offset > buffer->storage->size)
-        THError("out of bounds");
+        THError("out of bounds (seek from current)");
       buffer->position += offset;
       break;
     case SEEK_END:
       if(buffer->storage->size+offset < 0 || buffer->storage->size+offset > buffer->storage->size)
-        THError("out of bounds");
+        THError("out of bounds (seek end)");
       buffer->position = buffer->storage->size+offset;
       break;
     case SEEK_SET:
       if(offset < 0 || offset > buffer->storage->size)
-        THError("out of bounds");
+        THError("out of bounds (seek set)");
       buffer->position = offset;
       break;
     default:
@@ -35,8 +35,10 @@ static sf_count_t bt_vio_seek(sf_count_t offset, int whence, void *user_data)
 static sf_count_t bt_vio_read(void *ptr, sf_count_t count, void *user_data)
 {
   struct byte_storage_buffer_t *buffer = user_data;
-  if(count < 0 || buffer->position+count > buffer->storage->size)
-    THError("out of bounds");
+  sf_count_t remaining = buffer->storage->size-buffer->position;
+  if(count < 0)
+    THError("out of bounds (read)");
+  count = (count > remaining ? remaining : count);
   memcpy(ptr, buffer->storage->data+buffer->position, count);
   buffer->position += count;
   return count;
@@ -46,7 +48,7 @@ static sf_count_t bt_vio_write(const void *ptr, sf_count_t count, void *user_dat
 {
   struct byte_storage_buffer_t *buffer = user_data;
   if(count < 0)
-    THError("out of bounds");
+    THError("out of bounds (write)");
   if(buffer->position+count > buffer->storage->size)
     THByteStorage_resize(buffer->storage, buffer->position+count);
   memcpy(buffer->storage->data+buffer->position, ptr, count);
