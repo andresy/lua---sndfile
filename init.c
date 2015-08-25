@@ -177,7 +177,7 @@ static int sndfile_new(lua_State *L)
     THByteStorage_retain(storage);
     snd->buffer = buffer; /* buffer is GCed if there is an error */
     if(!(snd->file = sf_open_virtual(&sndfile_byte_storage_io, mode, &snd->info, buffer))) {
-      luaL_error(L, "could not open virtual buffer");
+      luaL_error(L, "could not open virtual buffer (%s)", sf_strerror(NULL));
     }
   }
 
